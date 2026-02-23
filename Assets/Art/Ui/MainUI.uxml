@@ -1,0 +1,6 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Art/Ui/ussFile.uss?fileID=7433441132597879392&amp;guid=f29ef1646a7f5704e8a482e5f277d1aa&amp;type=3#ussFile" />
+    <ui:VisualElement name="Panel" class="panel Hide" style="flex-grow: 1; align-items: center;">
+        <ui:VisualElement name="Container" style="flex-grow: 1; align-self: center; background-color: rgb(166, 72, 0); width: 880px; background-size: 64% 18%; height: 60px; justify-content: center; align-items: center; flex-direction: row-reverse;" />
+    </ui:VisualElement>
+</ui:UXML>
