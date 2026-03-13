@@ -346,10 +346,10 @@ MonoBehaviour:
   lookSensitivity: 0.03
   maxLookAngle: 85
   walkSpeed: 3
-  slowDownSpeed: 0.1
+  slowDownSpeed: 12
   sprintSpeed: 8
   crouchSpeed: 2.5
-  jumpForce: 7
+  jumpForce: 5.7
   enableHeadBob: 1
   enableCameraNoise: 1
   enableCameraTilt: 1
@@ -362,6 +362,10 @@ MonoBehaviour:
   moveTiltAngle: 3
   moveTiltSpeed: 5
   viewTiltAmount: 0.1
+  jumpVisualMultiplier: 1.4
+  cameraDelayAfterJump: 8
+  minJumpAngle: -20
+  maxJumpAngle: 20
   defaultFov: 80
   sprintFov: 90
   zoomFov: 30
@@ -445,8 +449,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 7833044436cb7f3499aff569aee155d1, type: 3}
   - {fileID: 8300000, guid: e120fa98cfeac5b419688562bde327ca, type: 3}
   - {fileID: 8300000, guid: d6240704738a1ff48a62d2cb0d2dea9a, type: 3}
-  jumpClip: {fileID: 8300000, guid: 0043cd33be98f944aa94875a909fca1a, type: 3}
-  landClip: {fileID: 8300000, guid: 2ccb735c0c52f93458f0a9a937255247, type: 3}
+  jumpClip: {fileID: 8300000, guid: d6240704738a1ff48a62d2cb0d2dea9a, type: 3}
+  landClip: {fileID: 8300000, guid: 7833044436cb7f3499aff569aee155d1, type: 3}
   crouchClip: {fileID: 8300000, guid: d6240704738a1ff48a62d2cb0d2dea9a, type: 3}
   baseFootstepPitch: 0.83
   pitchRandomization: 0.02

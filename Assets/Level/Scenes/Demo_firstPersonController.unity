@@ -4216,7 +4216,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=grey>ESC</color> Lock/unlock MOUSE
+  m_text: <color=grey>F</color> Lock/unlock MOUSE
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 477c804f7b1c7ef4da0ede8017d874cb, type: 2}
   m_sharedMaterial: {fileID: 1306132211747406587, guid: 477c804f7b1c7ef4da0ede8017d874cb, type: 2}
@@ -23430,6 +23430,14 @@ PrefabInstance:
       propertyPath: sliderContainer
       value: 
       objectReference: {fileID: 1172458457}
+    - target: {fileID: 5362112148769163129, guid: 00f22acf5c27f994c8fefa716f364d9e, type: 3}
+      propertyPath: jumpClip
+      value: 
+      objectReference: {fileID: 8300000, guid: d6240704738a1ff48a62d2cb0d2dea9a, type: 3}
+    - target: {fileID: 5362112148769163129, guid: 00f22acf5c27f994c8fefa716f364d9e, type: 3}
+      propertyPath: landClip
+      value: 
+      objectReference: {fileID: 8300000, guid: e8e9a04cb59c5034f87cccee87799e31, type: 3}
     - target: {fileID: 5859304883861615246, guid: 00f22acf5c27f994c8fefa716f364d9e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.5
@@ -26070,7 +26078,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '<color=grey>CTRL</color> Crouch
+  m_text: '<color=grey>C</color> Crouch
 
 '
   m_isRightToLeft: 0
@@ -26599,7 +26607,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4ca0d1300c75da48a9cd8b47c49295e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PLAYERTELEPORT
-  teleportTarget: {fileID: 1671404768}
 --- !u!1 &1471950977
 GameObject:
   m_ObjectHideFlags: 0
@@ -30847,12 +30854,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
   m_Padding:
-    m_Left: 19
+    m_Left: 20
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: -21.54
+  m_Spacing: 0
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0

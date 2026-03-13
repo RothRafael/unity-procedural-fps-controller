@@ -235,7 +235,7 @@
                 {
                     "name": "",
                     "id": "a47dc394-6fa5-42c2-97a3-caa7091ea18d",
-                    "path": "<Keyboard>/ctrl",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -334,7 +334,7 @@
                 {
                     "name": "",
                     "id": "265c8b27-e280-411f-a3e9-950abdde8dc5",
-                    "path": "<Keyboard>/escape",
+                    "path": "<Keyboard>/f",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

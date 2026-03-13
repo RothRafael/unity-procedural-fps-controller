@@ -20,12 +20,14 @@ public class FirstPersonController : MonoBehaviour
     public float sprintSpeed = 8f;
     public float crouchSpeed = 2.5f;
     public float jumpForce = 5f;
+    public float airControlForce = 15f;
 
     [Header("Procedural Animation (Juice)")]
     public bool enableHeadBob = true;
     public bool enableCameraNoise = false;
     public bool enableCameraTilt = false;
     public bool invertCamMoveTilt = false;
+    public bool enableJumpVisuals = true;
     public float cameraNoiseIntensity = 0.1f;
     public float cameraNoiseFrequency = 1f;
     public float bobFrequency = 10f;
@@ -34,6 +36,11 @@ public class FirstPersonController : MonoBehaviour
     public float moveTiltAngle = 2f;
     public float moveTiltSpeed = 5f;
     public float viewTiltAmount = 1f;
+    [Header("Jump Visuals")]
+    public float jumpVisualMultiplier = 10f;
+    public float cameraDelayAfterJump = 10f;
+    public float minJumpAngle = -20f;
+    public float maxJumpAngle = 20f;
 
     [Header("Zoom Settings")]
     public float defaultFov = 60f;
@@ -50,7 +57,8 @@ public class FirstPersonController : MonoBehaviour
     [Header("Ground Check")]
     public LayerMask groundMask;
     public float groundCheckOffset = 0.1f;
-    
+    public float jumpColliderHeight = 1.8f;
+
     [Header("Debug")]
     public bool _debugMode = false;
     #endregion
@@ -58,18 +66,20 @@ public class FirstPersonController : MonoBehaviour
     // Referências Internas
     private Rigidbody _rb;
     private CapsuleCollider _collider;
-    
+
     // Input State Cache
     private Vector2 _currentInputVector;
-    
+
     // State Variables
     private float _cameraPitch = 0f;
-    private float _currentTilt; 
+    private float _currentTilt;
     private float _defaultYPosCamera;
     private bool _isGrounded;
     private bool _hasStepped;
     private float _bobTimer;
-
+    private float _jumpLeanAmount;
+    private Vector3 _lastMovementDirection;
+    private float _lastMovementSpeed;
     // Acessores de Estado via InputManager
     private bool IsSprinting => _input.Sprint.IsPressed();
     private bool IsCrouching => _input.Crouch.IsPressed();
@@ -139,8 +149,8 @@ public class FirstPersonController : MonoBehaviour
 
         CheckGround();
         HandleMovement();
-        HandleLookRotation();   
-        UpdateCameraVisuals();  
+        HandleLookRotation();
+        UpdateCameraVisuals();
     }
 
     #region Movement & Physics Logic
@@ -153,29 +163,78 @@ public class FirstPersonController : MonoBehaviour
         if (newGroundState != _isGrounded)
         {
             if (newGroundState) OnLandPerformed?.Invoke();
+            _collider.height = newGroundState ? standHeight : jumpColliderHeight;  
             LogDebug(newGroundState ? "Status: Landed" : "Status: Airborne");
         }
 
         _isGrounded = newGroundState;
     }
-
     private void HandleMovement()
     {
-        if (_currentInputVector == Vector2.zero)
+        
+        Vector3 wishDir = GetMovementDirection();
+        float wishSpeed = GetTargetSpeed();
+
+        if (IsGrounded)
         {
-            _rb.linearVelocity = _rb.linearVelocity.magnitude < 0.01f ? Vector3.zero : _rb.linearVelocity * (1f - slowDownSpeed * Time.deltaTime);
+            MoveOnGround(wishDir, wishSpeed);
         }
+        else
+        {
+            MoveInAir(wishDir, wishSpeed);
+        }
+    }
+    private Vector3 GetMovementDirection()
+    {
+        Vector3 dir = transform.forward * _currentInputVector.y + transform.right * _currentInputVector.x;
+        return dir.normalized;
+    }
+    private float GetTargetSpeed()
+    {
+        if (IsCrouching && IsSprinting) return sprintSpeed * 0.5f;
+        if (IsCrouching) return crouchSpeed;
+        if (IsSprinting) return sprintSpeed;
+        return walkSpeed;
+    }
+    private void MoveOnGround(Vector3 wishDir, float wishSpeed)
+    {
+        if (wishDir == Vector3.zero)
+        {
+            // STOP LOGIC: Smoothly lerp horizontal velocity to zero
+            // We extract horizontal velocity to avoid affecting gravity (Y)
+            Vector3 horizontalVel = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
+            horizontalVel = Vector3.Lerp(horizontalVel, Vector3.zero, slowDownSpeed * Time.deltaTime);
 
-        float targetSpeed = walkSpeed;
-        if (IsCrouching && IsSprinting) targetSpeed = sprintSpeed * 0.5f;
-        else if (IsCrouching) targetSpeed = crouchSpeed;
-        else if (IsSprinting) targetSpeed = sprintSpeed;
+            _rb.linearVelocity = new Vector3(horizontalVel.x, _rb.linearVelocity.y, horizontalVel.z);
+        }
+        else
+        {
+            // MOVE LOGIC: Snappy ground movement
+            Vector3 targetVelocity = wishDir * wishSpeed;
+            targetVelocity.y = _rb.linearVelocity.y; // Maintain current gravity
+            _rb.linearVelocity = targetVelocity;
 
-        Vector3 targetDirection = transform.forward * _currentInputVector.y + transform.right * _currentInputVector.x;
-        Vector3 targetVelocity = targetDirection.normalized * targetSpeed;
+            // Save state for when we leave the ground
+            _lastMovementDirection = wishDir;
+        }
+    }
+    private void MoveInAir(Vector3 wishDir, float wishSpeed)
+    {
+        // MOMENTUM LOGIC: In the air, we don't overwrite velocity. 
+        // We add force to "nudge" the existing jump arc.
+        if (wishDir != Vector3.zero)
+        {
+            // airControlForce is a new variable you should add (e.g., 15f)
+            _rb.AddForce(wishDir * airControlForce, ForceMode.Acceleration);
 
-        targetVelocity.y = _rb.linearVelocity.y;
-        _rb.linearVelocity = targetVelocity;
+            // Optional: Clamp horizontal speed so the player doesn't accelerate infinitely
+            Vector3 horizontalVel = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
+            if (horizontalVel.magnitude > wishSpeed)
+            {
+                Vector3 clampedVel = horizontalVel.normalized * wishSpeed;
+                _rb.linearVelocity = new Vector3(clampedVel.x, _rb.linearVelocity.y, clampedVel.z);
+            }
+        }
     }
 
     private void OnJump(InputAction.CallbackContext ctx)
@@ -183,6 +242,7 @@ public class FirstPersonController : MonoBehaviour
         if (_isGrounded)
         {
             _rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            _collider.height = jumpColliderHeight; 
             OnJumpPerformed?.Invoke();
             LogDebug("Action: Jump Performed");
         }
@@ -210,7 +270,7 @@ public class FirstPersonController : MonoBehaviour
 
         // --- TILT ---
         float targetTilt = 0f;
-        
+
         if (enableCameraTilt && IsMoving)
         {
             float moveTilt = -_currentInputVector.x * moveTiltAngle;
@@ -234,9 +294,27 @@ public class FirstPersonController : MonoBehaviour
             noiseY = (Mathf.PerlinNoise(0f, Time.time * cameraNoiseFrequency) - 0.5f) * cameraNoiseIntensity;
         }
 
+
+        float targetJumpLean = 0f;
+        if (!IsGrounded && enableJumpVisuals)
+        {
+            
+            float verticalVel = Mathf.Clamp(_rb.linearVelocity.y, minJumpAngle, maxJumpAngle);
+
+            targetJumpLean = verticalVel * jumpVisualMultiplier;
+        }
+        // lerp o valor da da inclinação com o valor da flag que fica sendo zerada quando o player está no chão;
+        _jumpLeanAmount = Mathf.Lerp(_jumpLeanAmount, targetJumpLean, Time.deltaTime * cameraDelayAfterJump);
+
         // --- APPLY ---
         Transform targetTransform = cameraRoot != null ? cameraRoot : playerCamera.transform;
-        Quaternion finalRotation = Quaternion.Euler(_cameraPitch + noiseX, noiseY, _currentTilt);
+
+        // Final Pitch
+        float finalPitch = _cameraPitch + noiseX - _jumpLeanAmount;
+
+
+        Quaternion finalRotation = Quaternion.Euler(finalPitch, noiseY, _currentTilt);
+
         targetTransform.localRotation = finalRotation;
 
         HandleHeadBobPosition();
@@ -255,7 +333,7 @@ public class FirstPersonController : MonoBehaviour
             float wave = sineCycle * bobAmplitude;
             targetYPos = _defaultYPosCamera + wave;
 
-            HandleFootstepAudio(sineCycle); 
+            HandleFootstepAudio(sineCycle);
         }
         else
         {
@@ -268,7 +346,7 @@ public class FirstPersonController : MonoBehaviour
         Vector3 newPos = new Vector3(currentPos.x, targetYPos, currentPos.z);
 
         if (!enableHeadBob) { newPos.y = _defaultYPosCamera; }
-        
+
         playerCamera.transform.localPosition = Vector3.Lerp(currentPos, newPos, Time.deltaTime * smoothSpeed);
     }
 
@@ -291,12 +369,12 @@ public class FirstPersonController : MonoBehaviour
         if (_currentInputVector == Vector2.zero) return;
         playerCamera.DOFieldOfView(sprintFov, sprintFovDuration).SetEase(Ease.OutCubic);
     }
-    
+
     private void OnSprintEnd(InputAction.CallbackContext ctx)
     {
         playerCamera.DOFieldOfView(defaultFov, sprintFovDuration).SetEase(Ease.InSine);
     }
-    
+
     private void OnZoomStart(InputAction.CallbackContext ctx)
     {
         playerCamera.DOFieldOfView(zoomFov, zoomDuration).SetEase(Ease.OutCubic);
@@ -334,11 +412,11 @@ public class FirstPersonController : MonoBehaviour
         Vector3 spherePosition = transform.position + Vector3.up * (groundCheckOffset * 0.5f);
         Gizmos.DrawWireSphere(spherePosition, groundCheckOffset);
     }
-    
+
     #region Debug Accessors
     public Vector3 Velocity => _rb.linearVelocity;
     public Vector3 LocalVelocity => transform.InverseTransformDirection(Velocity);
-    public bool IsGrounded => _isGrounded; 
+    public bool IsGrounded => _isGrounded;
     public bool IsSprintingFlag => IsSprinting;
     public bool HasSteped => _hasStepped;
     public bool IsCrouchingFlag => IsCrouching;
